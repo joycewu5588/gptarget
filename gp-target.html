@@ -1,0 +1,2374 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>GP Target Composer</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,300;9..144,400;9..144,500;9..144,600;9..144,700&family=JetBrains+Mono:wght@400;500;600;700&family=Noto+Sans+TC:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#0d100e;
+  --bg-2:#11151212;
+  --panel:#161b17;
+  --panel-2:#1c2220;
+  --panel-3:#222a26;
+  --line:#2a332e;
+  --line-soft:#1f2722;
+  --ink:#eaece7;
+  --ink-2:#a8b3a8;
+  --ink-3:#6b7568;
+  --ink-4:#4a5249;
+  --accent:#c8a974;
+  --accent-soft:rgba(200,169,116,0.08);
+  --accent-line:rgba(200,169,116,0.22);
+  --sage:#8fa789;
+  --sage-soft:rgba(143,167,137,0.1);
+  --highlight:#dccc9c;
+  --warn:#d2a268;
+  --warn-soft:rgba(210,162,104,0.12);
+  --bad:#c87a6a;
+  --bad-soft:rgba(200,122,106,0.12);
+  --input-bg:#1c2421;
+  --shadow-sm:0 1px 3px rgba(0,0,0,0.25);
+  --shadow-md:0 4px 16px rgba(0,0,0,0.3);
+  --shadow-lg:0 8px 32px rgba(0,0,0,0.35);
+}
+
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{
+  background:var(--bg);
+  color:var(--ink);
+  font-family:"Noto Sans TC","Inter",-apple-system,sans-serif;
+  min-height:100vh;
+  -webkit-font-smoothing:antialiased;
+  -moz-osx-font-smoothing:grayscale;
+}
+body{
+  background-image:
+    radial-gradient(ellipse 100% 60% at 50% -10%, rgba(200,169,116,0.07), transparent 60%),
+    radial-gradient(ellipse 80% 50% at 90% 100%, rgba(143,167,137,0.05), transparent 50%);
+  background-attachment:fixed;
+}
+
+.wrap{max-width:1640px;margin:0 auto;padding:32px 28px 100px}
+
+/* === Header === */
+header{
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  padding-bottom:20px;
+  margin-bottom:28px;
+  flex-wrap:wrap;
+  gap:16px;
+  border-bottom:1px solid var(--line);
+}
+.title-block h1{
+  font-family:"Fraunces",serif;
+  font-weight:400;
+  font-size:34px;
+  letter-spacing:-0.025em;
+  line-height:1;
+  color:var(--ink);
+}
+.title-block h1 em{
+  font-style:italic;
+  color:var(--accent);
+  font-weight:300;
+}
+.title-block p{
+  color:var(--ink-3);
+  font-size:12.5px;
+  margin-top:10px;
+  letter-spacing:0.04em;
+  font-weight:400;
+}
+.backup-tools{display:flex;gap:6px}
+
+/* 快照彈窗 */
+.snap-modal{
+  position:fixed;inset:0;
+  background:rgba(0,0,0,0.65);
+  display:none;
+  align-items:center;justify-content:center;
+  z-index:200;padding:20px;
+  backdrop-filter:blur(4px);
+}
+.snap-modal.show{display:flex;animation:fade-in 0.2s ease-out}
+.snap-content{
+  background:linear-gradient(180deg, var(--panel) 0%, var(--panel-2) 100%);
+  border:1px solid var(--line);
+  border-radius:14px;
+  padding:24px;
+  max-width:720px;width:100%;
+  max-height:85vh;
+  overflow:auto;
+  box-shadow:var(--shadow-lg);
+}
+.snap-head{
+  display:flex;
+  justify-content:space-between;
+  align-items:flex-start;
+  gap:12px;
+  margin-bottom:18px;
+  padding-bottom:14px;
+  border-bottom:1px solid var(--line);
+  flex-wrap:wrap;
+}
+.snap-head h3{
+  font-family:"Fraunces",serif;
+  font-weight:400;
+  font-size:22px;
+  letter-spacing:-0.015em;
+  color:var(--ink);
+}
+.snap-head .snap-sub{
+  color:var(--ink-3);
+  font-size:12px;
+  margin-top:6px;
+  font-style:italic;
+  font-family:"Fraunces",serif;
+  line-height:1.5;
+}
+.snap-tools{display:flex;gap:6px;align-items:flex-start}
+.snap-list{
+  display:flex;
+  flex-direction:column;
+  gap:8px;
+}
+.snap-item{
+  display:grid;
+  grid-template-columns:auto 1fr auto;
+  gap:14px;
+  align-items:center;
+  padding:12px 14px;
+  background:var(--panel-2);
+  border:1px solid var(--line);
+  border-radius:9px;
+  transition:all 0.15s;
+}
+.snap-item:hover{border-color:var(--ink-4);background:var(--panel-3)}
+.snap-item .snap-icon{
+  font-family:"JetBrains Mono",monospace;
+  font-size:11px;
+  color:var(--accent);
+  background:var(--accent-soft);
+  padding:6px 10px;
+  border-radius:6px;
+  border:1px solid var(--accent-line);
+  font-weight:600;
+  letter-spacing:0.05em;
+}
+.snap-item .snap-info{display:flex;flex-direction:column;gap:3px;min-width:0}
+.snap-item .snap-time{
+  font-family:"JetBrains Mono",monospace;
+  font-size:12.5px;
+  color:var(--ink);
+  font-weight:500;
+}
+.snap-item .snap-detail{
+  font-size:11px;
+  color:var(--ink-3);
+  font-family:"JetBrains Mono",monospace;
+}
+.snap-item .snap-actions{display:flex;gap:6px;flex-shrink:0}
+.snap-empty{
+  padding:50px 20px;
+  text-align:center;
+  color:var(--ink-3);
+  font-style:italic;
+  font-family:"Fraunces",serif;
+  font-size:13px;
+}
+
+.date-block{
+  text-align:right;
+  font-family:"JetBrains Mono",monospace;
+  font-size:12px;
+  color:var(--ink-2);
+  letter-spacing:0.04em;
+  display:flex;
+  align-items:baseline;
+  gap:10px;
+}
+.date-block .big{
+  font-family:"Fraunces",serif;
+  font-size:20px;
+  font-weight:400;
+  color:var(--ink);
+  letter-spacing:-0.015em;
+  margin-bottom:0;
+}
+
+/* === Tabs === */
+.main-tabs{
+  display:flex;
+  gap:3px;
+  margin-bottom:28px;
+  background:var(--panel);
+  padding:5px;
+  border-radius:11px;
+  border:1px solid var(--line);
+  overflow-x:auto;
+  box-shadow:var(--shadow-sm);
+}
+.main-tab{
+  flex:1;
+  min-width:130px;
+  padding:12px 18px;
+  background:transparent;
+  border:none;
+  color:var(--ink-3);
+  font-family:inherit;
+  font-size:13.5px;
+  cursor:pointer;
+  border-radius:8px;
+  transition:all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+  white-space:nowrap;
+  font-weight:500;
+  letter-spacing:0.01em;
+}
+.main-tab .num{
+  font-family:"Fraunces",serif;
+  font-style:italic;
+  color:var(--ink-4);
+  margin-right:6px;
+  font-size:12px;
+  transition:color 0.2s;
+}
+.main-tab:hover{color:var(--ink-2)}
+.main-tab:hover .num{color:var(--ink-3)}
+.main-tab.active{
+  background:var(--bg);
+  color:var(--accent);
+  box-shadow:inset 0 0 0 1px var(--accent-line), 0 0 0 1px rgba(200,169,116,0.05);
+}
+.main-tab.active .num{color:var(--accent);opacity:0.7}
+
+.tab-panel{display:none;animation:fade-in 0.3s cubic-bezier(0.16, 1, 0.3, 1)}
+.tab-panel.active{display:block}
+@keyframes fade-in{from{opacity:0;transform:translateY(4px)}to{opacity:1;transform:none}}
+
+/* === Card === */
+.card{
+  background:linear-gradient(180deg, var(--panel) 0%, var(--panel-2) 100%);
+  border:1px solid var(--line);
+  border-radius:14px;
+  padding:24px;
+  margin-bottom:22px;
+  box-shadow:var(--shadow-sm);
+}
+.card-head{
+  display:flex;
+  align-items:flex-start;
+  gap:14px;
+  margin-bottom:18px;
+  flex-wrap:wrap;
+}
+.card-head .head-text{flex:1;min-width:200px}
+.card h2{
+  font-family:"Fraunces",serif;
+  font-weight:400;
+  font-size:21px;
+  letter-spacing:-0.015em;
+  display:flex;
+  align-items:baseline;
+  gap:12px;
+  color:var(--ink);
+}
+.card h2 .num{
+  font-family:"JetBrains Mono",monospace;
+  font-size:10px;
+  color:var(--accent);
+  background:var(--accent-soft);
+  padding:4px 9px;
+  border-radius:5px;
+  letter-spacing:0.12em;
+  font-weight:600;
+  border:1px solid var(--accent-line);
+}
+.card-head .sub-line{
+  color:var(--ink-3);
+  font-size:12.5px;
+  margin-top:6px;
+  line-height:1.6;
+  font-style:italic;
+  font-family:"Fraunces",serif;
+}
+
+/* === Global bar === */
+.global-bar{
+  display:grid;
+  grid-template-columns:repeat(6, 1fr);
+  gap:14px;
+}
+@media(max-width:1200px){.global-bar{grid-template-columns:repeat(3,1fr)}}
+@media(max-width:700px){.global-bar{grid-template-columns:repeat(2,1fr)}}
+
+.field{display:flex;flex-direction:column;gap:6px}
+.field label{
+  font-size:10px;
+  letter-spacing:0.1em;
+  text-transform:uppercase;
+  color:var(--ink-3);
+  font-weight:600;
+}
+.field label .hint{
+  text-transform:none;
+  letter-spacing:0;
+  color:var(--ink-4);
+  opacity:1;
+  margin-left:5px;
+  font-size:10px;
+  font-weight:400;
+}
+.field input{
+  background:var(--input-bg);
+  border:1px solid var(--line);
+  color:var(--ink);
+  padding:11px 13px;
+  border-radius:8px;
+  font-size:13.5px;
+  font-family:"JetBrains Mono",monospace;
+  font-weight:500;
+  width:100%;
+  transition:all 0.15s;
+}
+.field input:focus{
+  outline:none;
+  border-color:var(--accent);
+  background:var(--panel-3);
+  box-shadow:0 0 0 3px rgba(200,169,116,0.1);
+}
+.field input:read-only{
+  opacity:0.55;
+  cursor:not-allowed;
+  background:var(--bg);
+}
+
+/* === Progress indicator === */
+.progress-bar{
+  display:flex;
+  align-items:center;
+  gap:10px;
+  padding:10px 14px;
+  background:var(--panel-2);
+  border:1px solid var(--line);
+  border-radius:9px;
+  margin-bottom:16px;
+  flex-wrap:wrap;
+}
+.progress-bar .label{
+  font-size:11px;
+  color:var(--ink-3);
+  letter-spacing:0.08em;
+  text-transform:uppercase;
+  font-weight:600;
+}
+.progress-bar .bar-track{
+  flex:1;
+  min-width:120px;
+  height:6px;
+  background:var(--bg);
+  border-radius:3px;
+  overflow:hidden;
+  border:1px solid var(--line);
+}
+.progress-bar .bar-fill{
+  height:100%;
+  background:linear-gradient(90deg, var(--accent) 0%, var(--sage) 100%);
+  border-radius:2px;
+  transition:width 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+}
+.progress-bar .count{
+  font-family:"JetBrains Mono",monospace;
+  font-size:13px;
+  color:var(--accent);
+  font-weight:600;
+  min-width:40px;
+}
+
+/* === Paste cards (inline textarea) === */
+.paste-grid{
+  display:grid;
+  grid-template-columns:repeat(auto-fit, minmax(290px, 1fr));
+  gap:14px;
+}
+.paste-card{
+  background:var(--panel-2);
+  border:1px solid var(--line);
+  border-radius:11px;
+  padding:14px;
+  display:flex;
+  flex-direction:column;
+  gap:10px;
+  transition:all 0.15s;
+}
+.paste-card:hover{border-color:var(--ink-4)}
+.paste-card.filled{
+  border-color:var(--accent-line);
+  background:linear-gradient(180deg, var(--panel-2) 0%, rgba(200,169,116,0.03) 100%);
+}
+.paste-card .pc-head{
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
+  gap:8px;
+}
+.paste-card .pc-title{
+  font-size:13.5px;
+  color:var(--ink);
+  font-weight:600;
+  display:flex;
+  align-items:center;
+  gap:7px;
+  letter-spacing:0.01em;
+}
+.paste-card .pc-title .dot{
+  width:8px;
+  height:8px;
+  border-radius:50%;
+  background:var(--ink-4);
+  transition:all 0.2s;
+}
+.paste-card.filled .pc-title .dot{background:var(--accent);box-shadow:0 0 8px rgba(200,169,116,0.4)}
+.paste-card.partial .pc-title .dot{background:var(--warn)}
+
+.paste-card .pc-sub{
+  font-size:11px;
+  color:var(--ink-3);
+  line-height:1.5;
+  font-family:"JetBrains Mono",monospace;
+}
+.paste-card .pc-status{
+  font-size:11px;
+  color:var(--ink-3);
+  font-family:"JetBrains Mono",monospace;
+  font-weight:500;
+}
+.paste-card.filled .pc-status{color:var(--accent)}
+.paste-card.partial .pc-status{color:var(--warn)}
+
+.paste-card textarea{
+  width:100%;
+  background:var(--bg);
+  border:1px solid var(--line);
+  color:var(--ink);
+  padding:9px 11px;
+  border-radius:7px;
+  font-family:"JetBrains Mono",monospace;
+  font-size:12px;
+  min-height:60px;
+  resize:vertical;
+  line-height:1.5;
+  transition:all 0.15s;
+}
+.paste-card textarea:focus{
+  outline:none;
+  border-color:var(--accent);
+  box-shadow:0 0 0 3px rgba(200,169,116,0.08);
+}
+.paste-card textarea::placeholder{color:var(--ink-4);opacity:0.7}
+
+.paste-card .pc-foot{
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
+  gap:8px;
+  flex-wrap:wrap;
+}
+.paste-card .pc-foot .pc-actions{display:flex;gap:6px}
+.paste-card .pc-preview{
+  font-size:10.5px;
+  color:var(--ink-3);
+  font-family:"JetBrains Mono",monospace;
+  text-align:right;
+  line-height:1.4;
+}
+
+/* === Buttons === */
+.btn{
+  background:var(--panel);
+  border:1px solid var(--line);
+  color:var(--ink-2);
+  padding:8px 14px;
+  border-radius:7px;
+  font-family:inherit;
+  font-size:12px;
+  cursor:pointer;
+  transition:all 0.15s;
+  font-weight:500;
+  letter-spacing:0.02em;
+  white-space:nowrap;
+}
+.btn:hover{
+  border-color:var(--accent);
+  color:var(--accent);
+  background:var(--panel-3);
+}
+.btn:active{transform:translateY(1px)}
+.btn.primary{
+  background:linear-gradient(135deg, #c8a974 0%, #a78b5e 100%);
+  color:#181410;
+  border:1px solid transparent;
+  font-weight:600;
+  box-shadow:0 2px 8px rgba(200,169,116,0.15);
+}
+.btn.primary:hover{
+  transform:translateY(-1px);
+  box-shadow:0 6px 20px rgba(200,169,116,0.25);
+  color:#181410;
+  background:linear-gradient(135deg, #d2b380 0%, #b0916a 100%);
+}
+.btn.primary:active{transform:translateY(0)}
+.btn.small{padding:6px 11px;font-size:11px}
+.btn.ghost{background:transparent;border-color:transparent;color:var(--ink-3)}
+.btn.ghost:hover{background:var(--panel-3);color:var(--ink-2);border-color:transparent}
+.btn.sage{background:var(--sage-soft);border-color:rgba(143,167,137,0.3);color:var(--sage)}
+.btn.sage:hover{background:rgba(143,167,137,0.18);color:var(--sage);border-color:var(--sage)}
+
+/* === Main calc table === */
+.tools{
+  display:flex;
+  gap:10px;
+  flex-wrap:wrap;
+  align-items:center;
+  margin-bottom:14px;
+}
+.status-line{
+  color:var(--ink-3);
+  font-size:11.5px;
+  margin-left:auto;
+  font-style:italic;
+  font-family:"Fraunces",serif;
+  min-width:120px;
+  text-align:right;
+}
+.status-line.ok{color:var(--sage);font-style:normal;font-family:inherit;font-weight:500}
+.status-line.warn{color:var(--warn);font-style:normal;font-family:inherit;font-weight:500}
+
+.view-toggle{
+  display:flex;
+  gap:2px;
+  background:var(--panel-2);
+  padding:3px;
+  border-radius:7px;
+  border:1px solid var(--line);
+}
+.view-toggle button{
+  background:transparent;
+  border:none;
+  color:var(--ink-3);
+  padding:6px 11px;
+  border-radius:5px;
+  font-family:inherit;
+  font-size:11px;
+  cursor:pointer;
+  transition:all 0.15s;
+  font-weight:500;
+}
+.view-toggle button:hover{color:var(--ink-2)}
+.view-toggle button.active{background:var(--bg);color:var(--accent);box-shadow:inset 0 0 0 1px var(--accent-line)}
+
+.main-table-wrap{
+  overflow-x:auto;
+  border-radius:11px;
+  border:1px solid var(--line);
+  box-shadow:var(--shadow-sm);
+}
+.main-table{
+  width:100%;
+  border-collapse:collapse;
+  font-size:12.5px;
+  min-width:1400px;
+}
+.main-table th, .main-table td{
+  padding:9px 10px;
+  text-align:right;
+  border-bottom:1px solid var(--line);
+  border-right:1px solid var(--line-soft);
+}
+.main-table th:last-child, .main-table td:last-child{border-right:none}
+.main-table th{
+  background:var(--panel-2);
+  color:var(--ink-2);
+  font-weight:600;
+  font-size:10px;
+  text-transform:uppercase;
+  letter-spacing:0.06em;
+  position:sticky;
+  top:0;
+  z-index:2;
+  border-bottom:1px solid var(--accent-line);
+}
+.main-table th .sub{
+  display:block;
+  font-weight:400;
+  font-size:9px;
+  color:var(--ink-4);
+  text-transform:none;
+  letter-spacing:0;
+  margin-top:3px;
+  font-family:"JetBrains Mono",monospace;
+}
+.main-table th:first-child, .main-table td:first-child{
+  text-align:left;
+  position:sticky;
+  left:0;
+  background:var(--panel);
+  z-index:1;
+  color:var(--ink);
+  font-family:"Noto Sans TC",sans-serif;
+  font-weight:500;
+  min-width:90px;
+  border-right:1px solid var(--line);
+}
+.main-table th:first-child{background:var(--panel-2);z-index:3}
+.main-table tbody tr{transition:background 0.1s}
+.main-table tbody tr:nth-child(even) td{background:var(--bg-2)}
+.main-table tbody tr:nth-child(even) td:first-child{background:#13181500}
+.main-table tbody tr:hover td{background:var(--panel-3)}
+.main-table tbody tr:hover td:first-child{background:var(--panel-3)}
+
+.main-table td.input-cell{padding:3px 4px;background:rgba(200,169,116,0.025)}
+.main-table input.cell-input{
+  background:transparent;
+  border:1px solid transparent;
+  color:var(--ink);
+  padding:6px 8px;
+  border-radius:5px;
+  font-family:"JetBrains Mono",monospace;
+  font-size:12.5px;
+  font-weight:500;
+  width:100%;
+  text-align:right;
+  transition:all 0.12s;
+}
+.main-table input.cell-input::placeholder{color:var(--ink-4);opacity:0.5}
+.main-table input.cell-input:hover{border-color:var(--line);background:var(--bg)}
+.main-table input.cell-input:focus{
+  outline:none;
+  border-color:var(--accent);
+  background:var(--bg);
+  box-shadow:0 0 0 2px rgba(200,169,116,0.1);
+}
+.main-table input.cell-input.filled{
+  background:rgba(200,169,116,0.06);
+  color:var(--highlight);
+}
+.main-table input.cell-input.just-pasted{
+  animation:flash-paste 0.6s ease-out;
+}
+@keyframes flash-paste{
+  0%{background:rgba(200,169,116,0.4)}
+  100%{background:rgba(200,169,116,0.06)}
+}
+
+.main-table td.daily{color:var(--accent);font-family:"JetBrains Mono",monospace;font-weight:500}
+.main-table td.calc{color:var(--ink-3);font-family:"JetBrains Mono",monospace}
+.main-table td.first-val{color:var(--highlight);font-family:"JetBrains Mono",monospace;font-weight:600}
+.avg-breakdown{
+  margin-top:5px;
+  display:flex;
+  flex-direction:column;
+  gap:1px;
+  font-family:"JetBrains Mono",monospace;
+  font-size:9.5px;
+  font-weight:400;
+}
+.avg-breakdown .bd-row{
+  display:flex;
+  justify-content:space-between;
+  gap:8px;
+  color:var(--ink-3);
+  line-height:1.5;
+}
+.avg-breakdown .bd-row .bd-k{color:var(--ink-4)}
+.avg-breakdown .bd-row.hi .bd-k{color:var(--accent)}
+.avg-breakdown .bd-row.hi .bd-v{color:var(--highlight)}
+.avg-breakdown .bd-row.mgr .bd-k{color:var(--sage)}
+.avg-breakdown .bd-row .bd-v{color:var(--ink-2)}
+.main-table td.avg-val{
+  color:var(--sage);
+  font-family:"JetBrains Mono",monospace;
+  font-weight:700;
+  font-size:13px;
+  background:rgba(143,167,137,0.04) !important;
+}
+.main-table td.final-cell{
+  padding:3px 4px;
+  background:rgba(143,167,137,0.08) !important;
+  border-left:1px solid rgba(143,167,137,0.2);
+}
+.main-table input.final-input{
+  background:transparent;
+  border:1px solid transparent;
+  color:var(--sage);
+  font-weight:700;
+  padding:7px 9px;
+  border-radius:5px;
+  font-family:"JetBrains Mono",monospace;
+  font-size:14px;
+  width:100%;
+  text-align:right;
+  transition:all 0.12s;
+}
+.main-table input.final-input:hover{
+  border-color:var(--line);
+  background:var(--bg);
+}
+.main-table input.final-input:focus{
+  outline:none;
+  border-color:var(--sage);
+  background:var(--bg);
+  box-shadow:0 0 0 2px rgba(143,167,137,0.15);
+  color:var(--ink);
+}
+
+.col-group-header{
+  font-size:9.5px;
+  color:var(--ink-3);
+  text-transform:uppercase;
+  letter-spacing:0.1em;
+  padding:6px 10px !important;
+  background:var(--bg) !important;
+  font-weight:600;
+}
+
+/* === Pills === */
+.ach-pill{
+  display:inline-flex;
+  align-items:center;
+  padding:3px 8px;
+  border-radius:11px;
+  font-size:10.5px;
+  font-weight:600;
+  font-family:"JetBrains Mono",monospace;
+  white-space:nowrap;
+}
+.ach-good{background:var(--sage-soft);color:var(--sage)}
+.ach-warn{background:var(--warn-soft);color:var(--warn)}
+.ach-bad{background:var(--bad-soft);color:var(--bad)}
+
+.disp-pill{
+  display:inline-block;
+  padding:2px 7px;
+  border-radius:10px;
+  font-size:10px;
+  font-weight:600;
+  font-family:"JetBrains Mono",monospace;
+  white-space:nowrap;
+  margin-left:6px;
+  vertical-align:middle;
+}
+.disp-low{background:var(--sage-soft);color:var(--sage)}
+.disp-mid{background:var(--warn-soft);color:var(--warn)}
+.disp-high{background:var(--bad-soft);color:var(--bad);animation:pulse-warn 2s ease-in-out infinite}
+@keyframes pulse-warn{0%,100%{box-shadow:0 0 0 0 var(--bad-soft)}50%{box-shadow:0 0 0 4px rgba(200,122,106,0.05)}}
+
+.cap-tag{
+  display:inline-block;
+  margin-top:3px;
+  padding:1px 6px;
+  border-radius:8px;
+  font-size:9px;
+  font-weight:600;
+  font-family:"JetBrains Mono",monospace;
+  background:var(--warn-soft);
+  color:var(--warn);
+  letter-spacing:0.04em;
+}
+
+/* === Legend === */
+.legend{
+  display:flex;
+  gap:18px;
+  font-size:11px;
+  color:var(--ink-3);
+  margin-top:14px;
+  flex-wrap:wrap;
+  padding-top:14px;
+  border-top:1px solid var(--line-soft);
+}
+.legend span{display:inline-flex;align-items:center;gap:6px}
+.legend span::before{content:"";width:10px;height:10px;border-radius:2px;display:inline-block}
+.legend .l-input::before{background:rgba(200,169,116,0.3)}
+.legend .l-daily::before{background:var(--accent)}
+.legend .l-first::before{background:var(--highlight)}
+.legend .l-avg::before{background:var(--sage)}
+.legend .l-final::before{background:var(--sage);box-shadow:0 0 0 1px var(--sage)}
+
+/* === Help box === */
+.help-box{
+  background:linear-gradient(135deg, var(--accent-soft) 0%, rgba(200,169,116,0.02) 100%);
+  border:1px solid var(--accent-line);
+  border-radius:9px;
+  padding:14px 16px;
+  margin-bottom:16px;
+  font-size:12.5px;
+  color:var(--ink-2);
+  line-height:1.7;
+}
+.help-box code{
+  background:var(--bg);
+  padding:1px 7px;
+  border-radius:4px;
+  font-family:"JetBrains Mono",monospace;
+  font-size:11px;
+  color:var(--accent);
+  border:1px solid var(--line);
+}
+.help-box strong{color:var(--accent);font-weight:600}
+
+/* === History table === */
+.history-table-wrap{
+  overflow:auto;
+  border-radius:11px;
+  border:1px solid var(--line);
+  max-height:560px;
+  box-shadow:var(--shadow-sm);
+}
+.history-table{
+  width:100%;
+  border-collapse:collapse;
+  font-size:11.5px;
+  font-family:"JetBrains Mono",monospace;
+}
+.history-table th, .history-table td{
+  padding:7px 10px;
+  text-align:right;
+  border-bottom:1px solid var(--line-soft);
+}
+.history-table th{
+  color:var(--ink-3);
+  font-weight:600;
+  font-size:10px;
+  text-transform:uppercase;
+  letter-spacing:0.08em;
+  background:var(--panel-2);
+  position:sticky;
+  top:0;
+  z-index:1;
+  border-bottom:1px solid var(--accent-line);
+}
+.history-table th:first-child, .history-table td:first-child{
+  text-align:left;
+  color:var(--ink-2);
+  position:sticky;
+  left:0;
+  background:var(--panel);
+  z-index:1;
+  font-family:"Noto Sans TC",sans-serif;
+  font-weight:500;
+}
+.history-table th:first-child{background:var(--panel-2);z-index:2}
+.history-table tbody tr:hover td{background:var(--panel-3)}
+.history-table input{
+  background:transparent;
+  border:1px solid transparent;
+  color:var(--ink);
+  padding:4px 6px;
+  border-radius:4px;
+  font-family:inherit;
+  font-size:11px;
+  width:90px;
+  text-align:right;
+  transition:all 0.12s;
+}
+.history-table input:hover{border-color:var(--line)}
+.history-table input:focus{
+  outline:none;
+  border-color:var(--accent);
+  background:var(--bg);
+}
+.history-table .od{color:var(--ink-3);font-weight:600}
+.history-table .row-divider td{
+  border-top:2px solid var(--accent-line);
+  background:rgba(200,169,116,0.03);
+}
+.history-table .row-divider td:first-child{
+  color:var(--accent);
+  font-weight:600;
+}
+
+/* === Achievement cards === */
+.ach-grid{
+  display:grid;
+  grid-template-columns:repeat(auto-fit, minmax(190px, 1fr));
+  gap:14px;
+  margin-top:16px;
+}
+.ach-card{
+  background:linear-gradient(180deg, var(--panel-2) 0%, var(--panel-3) 100%);
+  border:1px solid var(--line);
+  border-radius:11px;
+  padding:18px;
+  box-shadow:var(--shadow-sm);
+}
+.ach-card .lbl{
+  font-size:10px;
+  color:var(--ink-3);
+  text-transform:uppercase;
+  letter-spacing:0.1em;
+  margin-bottom:8px;
+  font-weight:600;
+}
+.ach-card .val{
+  font-family:"Fraunces",serif;
+  font-size:30px;
+  font-weight:400;
+  letter-spacing:-0.02em;
+  color:var(--ink);
+  line-height:1;
+}
+.ach-card .sub{
+  font-size:11px;
+  color:var(--ink-3);
+  font-family:"JetBrains Mono",monospace;
+  margin-top:6px;
+}
+
+/* === Muted === */
+.muted{
+  color:var(--ink-3);
+  font-size:11.5px;
+  line-height:1.6;
+  font-style:italic;
+  font-family:"Fraunces",serif;
+}
+
+/* === Divider === */
+.section-divider{
+  display:flex;
+  align-items:center;
+  gap:12px;
+  margin:24px 0 16px;
+  color:var(--ink-3);
+  font-size:11px;
+  text-transform:uppercase;
+  letter-spacing:0.15em;
+  font-weight:600;
+}
+.section-divider::before, .section-divider::after{
+  content:"";
+  flex:1;
+  height:1px;
+  background:var(--line);
+}
+
+/* === Empty state === */
+.empty-state{
+  padding:60px 20px;
+  text-align:center;
+  color:var(--ink-3);
+  font-style:italic;
+  font-family:"Fraunces",serif;
+  font-size:14px;
+}
+
+/* === Scrollbar === */
+::-webkit-scrollbar{width:10px;height:10px}
+::-webkit-scrollbar-track{background:var(--bg)}
+::-webkit-scrollbar-thumb{background:var(--line);border-radius:5px;border:2px solid var(--bg)}
+::-webkit-scrollbar-thumb:hover{background:var(--ink-4)}
+
+/* === Tooltip === */
+[data-tip]{position:relative}
+[data-tip]:hover::after{
+  content:attr(data-tip);
+  position:absolute;
+  bottom:100%;
+  left:50%;
+  transform:translateX(-50%);
+  background:var(--bg);
+  color:var(--ink-2);
+  padding:6px 10px;
+  border-radius:6px;
+  font-size:11px;
+  white-space:nowrap;
+  border:1px solid var(--line);
+  z-index:50;
+  margin-bottom:6px;
+  box-shadow:var(--shadow-md);
+  pointer-events:none;
+  font-family:"Noto Sans TC",sans-serif;
+}
+
+/* === Hide compact mode === */
+.main-table.compact td.col-mid,
+.main-table.compact th.col-mid{display:none}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+<header>
+  <div class="title-block">
+    <h1>GP <em>Target</em> Composer</h1>
+  </div>
+  <div style="display:flex;align-items:center;gap:14px;flex-wrap:wrap">
+    <div class="backup-tools">
+      <button class="btn small" id="snapshot-open" data-tip="瀏覽自動快照（每次鎖定目標自動存一份）">📸 快照</button>
+      <button class="btn small" id="backup-export" data-tip="下載含全部資料的備份檔">⬇ 備份</button>
+      <button class="btn small" id="backup-import" data-tip="從備份檔還原全部資料">⬆ 還原</button>
+      <input type="file" id="backup-file" accept=".json,application/json" style="display:none">
+    </div>
+    <div class="date-block">
+      <div class="big" id="today-date">--</div>
+      <div id="today-meta">--</div>
+    </div>
+  </div>
+</header>
+
+
+<div class="main-tabs">
+  <button class="main-tab active" data-tab="compose"><span class="num">01</span>訂目標</button>
+  <button class="main-tab" data-tab="history"><span class="num">02</span>歷史月表</button>
+  <button class="main-tab" data-tab="achievement"><span class="num">03</span>達成率分析</button>
+  <button class="main-tab" data-tab="opendays"><span class="num">04</span>開門天數</button>
+</div>
+
+<!-- ① 訂目標 -->
+<div class="tab-panel active" id="tab-compose">
+
+  <div class="card">
+    <div class="card-head">
+      <div class="head-text">
+        <h2><span class="num">01</span>本月設定</h2>
+        <div class="sub-line">填一次，所有品項共用</div>
+      </div>
+    </div>
+    <div class="global-bar">
+      <div class="field">
+        <label>訂目標日期</label>
+        <input type="date" id="set-date">
+      </div>
+      <div class="field">
+        <label>本月已過天數 <span class="hint">訂目標日前一天</span></label>
+        <input type="number" id="mtd-days" readonly>
+      </div>
+      <div class="field">
+        <label>下月開門日數</label>
+        <input type="number" id="next-open-days" placeholder="30" min="1" max="31">
+      </div>
+      <div class="field">
+        <label>進步 % <span class="hint">5~10</span></label>
+        <input type="number" id="growth" value="10" step="0.5" min="0" max="20">
+      </div>
+      <div class="field">
+        <label>上月實際開門天數</label>
+        <input type="number" id="prev-open-days" placeholder="自動帶入" min="1" max="31">
+      </div>
+      <div class="field">
+        <label>上月 <span class="hint">自動</span></label>
+        <input type="text" id="prev-month" readonly>
+      </div>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-head">
+      <div class="head-text">
+        <h2><span class="num">02</span>貼上文字資料</h2>
+        <div class="sub-line">直接貼進每張卡片，按「套用」即填入主表</div>
+      </div>
+    </div>
+
+    <div class="help-box">
+      <strong>支援格式：</strong>每行「品項 + 金額」即可。有達成率%也會自動抓。<br>
+      範例：<code>大數 938,000 96.67%</code> · <code>iPhone $182,000</code> · <code>Memory: 458,000 / 25.61%</code>
+    </div>
+
+    <div class="progress-bar">
+      <span class="label">本月填表進度</span>
+      <div class="bar-track"><div class="bar-fill" id="progress-fill" style="width:0%"></div></div>
+      <span class="count" id="progress-count">0 / 55</span>
+    </div>
+
+    <div class="paste-grid" id="paste-grid">
+      <!-- 由 JS 渲染 -->
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-head">
+      <div class="head-text">
+        <h2><span class="num">03</span>11 品項目標計算</h2>
+        <div class="sub-line">加權每日 × 達成率（90~110%截斷）× 進步 × 開門 · 四項平均 + 微調</div>
+      </div>
+    </div>
+
+    <div class="tools">
+      <button class="btn primary" id="calc-all-btn">↻ 重算全部</button>
+      <button class="btn" id="export-btn">📋 複製最終目標</button>
+      <button class="btn sage" id="commit-btn">✓ 鎖定本月目標</button>
+      <div class="view-toggle" style="margin-left:auto">
+        <button class="active" data-view="full">完整</button>
+        <button data-view="compact">精簡</button>
+      </div>
+      <span class="status-line" id="status">—</span>
+    </div>
+
+    <div class="main-table-wrap">
+      <table class="main-table" id="main-table"></table>
+    </div>
+
+    <div class="legend">
+      <span class="l-input">輸入欄</span>
+      <span class="l-daily">加權每日 GP</span>
+      <span class="l-first">第一數值</span>
+      <span class="l-avg">四項平均</span>
+      <span class="l-final">最終目標（可微調）</span>
+    </div>
+  </div>
+
+</div>
+
+<!-- ② 歷史月表 -->
+<div class="tab-panel" id="tab-history">
+  <div class="card">
+    <div class="card-head">
+      <div class="head-text">
+        <h2><span class="num">02</span>歷史 GP 資料</h2>
+        <div class="sub-line">每月實際達成 · 點欄位可改 · 月底正確 GP 出爐後在此或回到①頁面貼上會自動更新</div>
+      </div>
+    </div>
+    <div class="tools">
+      <button class="btn" id="export-history">📋 複製整表（Tab 分隔）</button>
+    </div>
+    <div class="history-table-wrap" id="history-gp-wrap"></div>
+  </div>
+</div>
+
+<!-- ③ 達成率分析 -->
+<div class="tab-panel" id="tab-achievement">
+  <div class="card">
+    <div class="card-head">
+      <div class="head-text">
+        <h2><span class="num">03</span>整體達成率</h2>
+        <div class="sub-line">大數 · 從現在開始累積 · 鎖定本月目標後開始追蹤</div>
+      </div>
+    </div>
+    <div class="ach-grid" id="ach-summary"></div>
+  </div>
+
+  <div class="card">
+    <div class="card-head">
+      <div class="head-text">
+        <h2><span class="num">04</span>達成率歷史</h2>
+        <div class="sub-line">最終目標 vs 實際 GP · 各品項細項</div>
+      </div>
+    </div>
+    <div class="history-table-wrap" id="ach-table-wrap"></div>
+  </div>
+</div>
+
+<!-- ④ 開門天數 -->
+<div class="tab-panel" id="tab-opendays">
+  <div class="card">
+    <div class="card-head">
+      <div class="head-text">
+        <h2><span class="num">05</span>每月開門天數</h2>
+        <div class="sub-line">內建至 2026/4 · 之後手動補（每月底放假天數可能不同）</div>
+      </div>
+    </div>
+    <div class="history-table-wrap" id="opendays-wrap"></div>
+  </div>
+</div>
+
+</div>
+
+<!-- 快照彈窗 -->
+<div class="snap-modal" id="snap-modal">
+  <div class="snap-content">
+    <div class="snap-head">
+      <div>
+        <h3>自動快照</h3>
+        <div class="snap-sub">每次「鎖定本月目標」時自動存一份。保留最近 12 份，可隨時還原。</div>
+      </div>
+      <div class="snap-tools">
+        <button class="btn small" id="snap-create-now">+ 立即建立快照</button>
+        <button class="btn ghost small" id="snap-close">✕</button>
+      </div>
+    </div>
+    <div class="snap-list" id="snap-list"></div>
+  </div>
+</div>
+
+<script>
+const ITEMS = ["大數","iPhone","Memory","Speaker","Cable","Media","Keyboard","Orico","Network","PowerBank","Power Bar"];
+
+const ITEM_ALIASES = {
+  "大數":["大數","total gp","totalgp","total","month total","月總","總"],
+  "iPhone":["iphone accessories","iphone","ip ","蘋果"],
+  "Memory":["memory","記憶體","記憶","mem"],
+  "Speaker":["speaker","喇叭","音響"],
+  "Cable":["cable","線材","線"],
+  "Media":["media","媒體"],
+  "Keyboard":["keyboard","鍵盤"],
+  "Orico":["orico"],
+  "Network":["network","網路"],
+  "PowerBank":["powerbank","power bank","行動電源","充電寶"],
+  "Power Bar":["power bar","powerbar","延長線"]
+};
+
+const ACH_FLOOR = 0.90;
+const ACH_CEIL  = 1.10;
+
+const OPEN_DAYS_DEFAULT = {
+  "2023-06":30,"2023-07":30,"2023-08":31,"2023-09":26,"2023-10":30,"2023-11":30,"2023-12":31,
+  "2024-01":31,"2024-02":26,"2024-03":31,"2024-04":30,"2024-05":31,"2024-06":30,"2024-07":31,"2024-08":31,"2024-09":28,"2024-10":31,"2024-11":28,"2024-12":31,
+  "2025-01":28,"2025-02":28,"2025-03":31,"2025-04":30,"2025-05":31,"2025-06":30,"2025-07":29,"2025-08":27,"2025-09":26,"2025-10":31,"2025-11":30,"2025-12":31,
+  "2026-01":28,"2026-02":25,"2026-03":31,"2026-04":30
+};
+
+const DEFAULT_GP = {
+  "大數":{"2023-06":918811,"2023-07":1110456,"2023-08":1057073,"2023-09":848101,"2023-10":965050,"2023-11":860708,"2023-12":950232,"2024-01":754793,"2024-02":735999,"2024-03":816308,"2024-04":719667,"2024-05":784304,"2024-06":818331,"2024-07":823384,"2024-08":852516,"2024-09":736670,"2024-10":751591,"2024-11":745418,"2024-12":769669,"2025-01":652596,"2025-02":716365,"2025-03":756003,"2025-04":879235,"2025-05":729307,"2025-06":698122,"2025-07":697577,"2025-08":754576,"2025-09":640131,"2025-10":716286,"2025-11":770345,"2025-12":944479,"2026-01":880150,"2026-02":833496,"2026-03":895817,"2026-04":879235},
+  "iPhone":{"2023-06":273999,"2023-07":327340,"2023-08":313225,"2023-09":251144,"2023-10":312492,"2023-11":266866,"2023-12":274813,"2024-01":213919,"2024-02":198982,"2024-03":240721,"2024-04":216868,"2024-05":220315,"2024-06":247634,"2024-07":254587,"2024-08":263557,"2024-09":217151,"2024-10":220993,"2024-11":196044,"2024-12":192497,"2025-01":171479,"2025-02":175842,"2025-03":200189,"2025-04":150607,"2025-05":191359,"2025-06":189267,"2025-07":193775,"2025-08":199090,"2025-09":162744,"2025-10":181857,"2025-11":162612,"2025-12":167252,"2026-01":155831,"2026-02":132217,"2026-03":156771,"2026-04":150607},
+  "Memory":{"2023-06":229670,"2023-07":317591,"2023-08":291939,"2023-09":261880,"2023-10":272966,"2023-11":263577,"2023-12":259580,"2024-01":227995,"2024-02":204099,"2024-03":226959,"2024-04":183440,"2024-05":209216,"2024-06":220099,"2024-07":207830,"2024-08":210335,"2024-09":181416,"2024-10":194338,"2024-11":205316,"2024-12":203499,"2025-01":213325,"2025-02":242732,"2025-03":168988,"2025-04":212938,"2025-05":218126,"2025-06":218126,"2025-07":200983,"2025-08":229944,"2025-09":182889,"2025-10":248504,"2025-11":333068,"2025-12":475567,"2026-01":448403,"2026-02":420296,"2026-03":458783,"2026-04":468981},
+  "Speaker":{"2023-06":93980,"2023-07":105983,"2023-08":118490,"2023-09":79684,"2023-10":93096,"2023-11":90732,"2023-12":123000,"2024-01":87307,"2024-02":88094,"2024-03":96201,"2024-04":99645,"2024-05":115179,"2024-06":111997,"2024-07":112009,"2024-08":109905,"2024-09":107542,"2024-10":101513,"2024-11":88770,"2024-12":132983,"2025-01":90462,"2025-02":110963,"2025-03":97341,"2025-04":93436,"2025-05":117967,"2025-06":102773,"2025-07":96690,"2025-08":111871,"2025-09":116673,"2025-10":96223,"2025-11":90746,"2025-12":111714,"2026-01":107109,"2026-02":108329,"2026-03":85334,"2026-04":93436},
+  "Cable":{"2023-06":68990,"2023-07":67030,"2023-08":73103,"2023-09":56408,"2023-10":67768,"2023-11":49126,"2023-12":59744,"2024-01":56343,"2024-02":59403,"2024-03":50912,"2024-04":60025,"2024-05":61730,"2024-06":57804,"2024-07":66151,"2024-08":55921,"2024-09":55420,"2024-10":59611,"2024-11":51349,"2024-12":46682,"2025-01":69819,"2025-02":56813,"2025-03":36485,"2025-04":49546,"2025-05":49546,"2025-06":52386,"2025-07":46578,"2025-08":55357,"2025-09":50649,"2025-10":48873,"2025-11":37886,"2025-12":35289,"2026-01":38731,"2026-02":42104,"2026-03":42214,"2026-04":36485},
+  "Media":{"2023-06":61857,"2023-07":53398,"2023-08":60145,"2023-09":43386,"2023-10":39134,"2023-11":38279,"2023-12":58598,"2024-01":39703,"2024-02":48281,"2024-03":46319,"2024-04":46739,"2024-05":50359,"2024-06":47685,"2024-07":45871,"2024-08":45831,"2024-09":38314,"2024-10":48028,"2024-11":71732,"2024-12":70757,"2025-01":48620,"2025-02":52724,"2025-03":53161,"2025-04":24751,"2025-05":44335,"2025-06":36183,"2025-07":29344,"2025-08":28662,"2025-09":18168,"2025-10":30464,"2025-11":35669,"2025-12":34264,"2026-01":32147,"2026-02":36317,"2026-03":32101,"2026-04":24751},
+  "Keyboard":{"2023-06":58762,"2023-07":74717,"2023-08":71929,"2023-09":61151,"2023-10":56942,"2023-11":44682,"2023-12":55203,"2024-01":40644,"2024-02":41814,"2024-03":43664,"2024-04":37027,"2024-05":42080,"2024-06":44684,"2024-07":55259,"2024-08":59814,"2024-09":48005,"2024-10":37517,"2024-11":39616,"2024-12":28160,"2025-01":23738,"2025-02":27011,"2025-03":37544,"2025-04":21125,"2025-05":31520,"2025-06":24971,"2025-07":30670,"2025-08":34557,"2025-09":27161,"2025-10":23121,"2025-11":31337,"2025-12":32425,"2026-01":26180,"2026-02":26286,"2026-03":34521,"2026-04":21125},
+  "Orico":{"2023-06":33763,"2023-07":40724,"2023-08":49933,"2023-09":36827,"2023-10":38565,"2023-11":35438,"2023-12":34557,"2024-01":31232,"2024-02":31219,"2024-03":31478,"2024-04":26479,"2024-05":29175,"2024-06":30225,"2024-07":30422,"2024-08":35049,"2024-09":31774,"2024-10":33491,"2024-11":28478,"2024-12":28517,"2025-01":27910,"2025-02":26012,"2025-03":27105,"2025-04":15377,"2025-05":25474,"2025-06":21348,"2025-07":25176,"2025-08":24408,"2025-09":23104,"2025-10":24521,"2025-11":24718,"2025-12":20748,"2026-01":19733,"2026-02":15364,"2026-03":17555,"2026-04":15377},
+  "Network":{"2023-06":39020,"2023-07":58756,"2023-08":29362,"2023-09":24883,"2023-10":42334,"2023-11":30177,"2023-12":25135,"2024-01":17484,"2024-02":18404,"2024-03":24349,"2024-04":25742,"2024-05":24349,"2024-06":30201,"2024-07":29570,"2024-08":30874,"2024-09":33331,"2024-10":28311,"2024-11":27617,"2024-12":19536,"2025-01":25217,"2025-02":25301,"2025-03":22983,"2025-04":25890,"2025-05":25890,"2025-06":23534,"2025-07":22528,"2025-08":28691,"2025-09":26884,"2025-10":20480,"2025-11":17753,"2025-12":19456,"2026-01":17011,"2026-02":17160,"2026-03":18923,"2026-04":22983},
+  "PowerBank":{"2023-06":50911,"2023-07":60478,"2023-08":54623,"2023-09":43495,"2023-10":57203,"2023-11":54640,"2023-12":67047,"2024-01":49957,"2024-02":49887,"2024-03":55307,"2024-04":45921,"2024-05":47113,"2024-06":46857,"2024-07":49939,"2024-08":45881,"2024-09":40263,"2024-10":45760,"2024-11":47989,"2024-12":56743,"2025-01":39199,"2025-02":36561,"2025-03":38896,"2025-04":35647,"2025-05":37245,"2025-06":33828,"2025-07":55796,"2025-08":54940,"2025-09":37667,"2025-10":46090,"2025-11":42234,"2025-12":48802,"2026-01":34398,"2026-02":36100,"2026-03":51062,"2026-04":37245},
+  "Power Bar":{"2023-06":49048,"2023-07":52508,"2023-08":51764,"2023-09":33204,"2023-10":37323,"2023-11":30113,"2023-12":40602,"2024-01":28990,"2024-02":29889,"2024-03":35330,"2024-04":26825,"2024-05":26486,"2024-06":30459,"2024-07":27662,"2024-08":33277,"2024-09":24534,"2024-10":21515,"2024-11":26105,"2024-12":30784,"2025-01":21501,"2025-02":18822,"2025-03":24264,"2025-04":15756,"2025-05":23425,"2025-06":22510,"2025-07":24007,"2025-08":21421,"2025-09":15999,"2025-10":15845,"2025-11":16941,"2025-12":18324,"2026-01":18563,"2026-02":15414,"2026-03":19703,"2026-04":15756}
+};
+
+const STORAGE_KEY = "gp_target_v8";
+let state = {
+  gp: structuredClone(DEFAULT_GP),
+  openDays: structuredClone(OPEN_DAYS_DEFAULT),
+  global: {setDate:"", nextOpenDays:"", growth:"10", prevOpenDays:""},
+  inputs: {},
+  targets: {},
+  viewMode: "full",
+  pasteText: {}  // {targetKey -> {card -> raw text}}
+};
+
+function loadState(){
+  try{
+    const raw = localStorage.getItem(STORAGE_KEY);
+    if(raw){
+      const parsed = JSON.parse(raw);
+      if(parsed.gp) ITEMS.forEach(it=>{if(parsed.gp[it]) state.gp[it]={...state.gp[it], ...parsed.gp[it]}});
+      if(parsed.openDays) state.openDays = {...state.openDays, ...parsed.openDays};
+      if(parsed.global) state.global = {...state.global, ...parsed.global};
+      if(parsed.inputs) state.inputs = parsed.inputs;
+      if(parsed.targets) state.targets = parsed.targets;
+      if(parsed.viewMode) state.viewMode = parsed.viewMode;
+      if(parsed.pasteText) state.pasteText = parsed.pasteText;
+    }
+  }catch(e){console.warn("load failed",e)}
+}
+function saveState(){try{localStorage.setItem(STORAGE_KEY, JSON.stringify(state))}catch(e){}}
+
+function ym(date){const y=date.getFullYear(),m=String(date.getMonth()+1).padStart(2,"0");return `${y}-${m}`}
+function nextYm(date){return ym(new Date(date.getFullYear(), date.getMonth()+1, 1))}
+function prevYmKey(key, n=1){const [y,m]=key.split("-").map(Number);return ym(new Date(y, m-1-n, 1))}
+function sameMonthYearAgo(key, yearsAgo){const [y,m]=key.split("-").map(Number);return `${y-yearsAgo}-${String(m).padStart(2,"0")}`}
+function todayStr(){return new Date().toISOString().slice(0,10)}
+function fmt(n){if(n==null||isNaN(n))return"—";return"$"+Math.round(n).toLocaleString()}
+function fmtPct(n){if(n==null||isNaN(n))return"—";return n.toFixed(2)+"%"}
+function clamp(v, lo, hi){return Math.max(lo, Math.min(hi, v))}
+
+// 產生四項平均的明細小表（第一數值 / 輝 / 豪 / 上週）
+function buildBreakdown(r, ip){
+  if(!r) return "";
+  const mgrHui = parseFloat(ip.mgrHui);
+  const mgrHao = parseFloat(ip.mgrHao);
+  const rows = [
+    {k:"基準", v:r.firstValue, cls:"hi"},
+    {k:"輝", v:isNaN(mgrHui)?null:mgrHui, cls:"mgr"},
+    {k:"豪", v:isNaN(mgrHao)?null:mgrHao, cls:"mgr"},
+    {k:"7天", v:r.weekProj, cls:""}
+  ];
+  let h = '<div class="avg-breakdown">';
+  rows.forEach(row=>{
+    if(row.v==null || isNaN(row.v)) return;
+    h += `<div class="bd-row ${row.cls}"><span class="bd-k">${row.k}</span><span class="bd-v">${fmt(row.v)}</span></div>`;
+  });
+  h += '</div>';
+  return h;
+}
+
+/* === 文字解析 === */
+function parseTextToItems(text){
+  if(!text) return {};
+  const result = {};
+  const lines = text.split(/[\n\r]+/);
+  const aliasMap = {};
+  for(const [item, aliases] of Object.entries(ITEM_ALIASES)){
+    for(const a of aliases) aliasMap[a.toLowerCase()] = item;
+  }
+  for(let line of lines){
+    line = line.trim();
+    if(!line) continue;
+    let matchedItem = null, matchedAliasLen = 0;
+    const lineLower = line.toLowerCase();
+    for(const [alias, item] of Object.entries(aliasMap)){
+      const idx = lineLower.indexOf(alias);
+      if(idx>=0 && alias.length > matchedAliasLen){ matchedItem = item; matchedAliasLen = alias.length; }
+    }
+    if(!matchedItem) continue;
+    const pctMatch = line.match(/(\d+(?:\.\d+)?)\s*%/);
+    let pct = null, lineForGp = line;
+    if(pctMatch){ pct = parseFloat(pctMatch[1]); lineForGp = line.replace(pctMatch[0], ""); }
+    const numMatches = lineForGp.match(/[\d,]+(?:\.\d+)?/g);
+    if(!numMatches){
+      if(pct!=null){ if(!result[matchedItem]) result[matchedItem]={}; result[matchedItem].pct = pct; }
+      continue;
+    }
+    let bestNum = null;
+    for(const nm of numMatches){
+      const n = parseFloat(nm.replace(/,/g, ""));
+      if(!isNaN(n) && n >= 100){ if(bestNum==null || n > bestNum) bestNum = n; }
+    }
+    if(bestNum==null && pct==null) continue;
+    if(!result[matchedItem]) result[matchedItem] = {};
+    if(bestNum!=null) result[matchedItem].gp = bestNum;
+    if(pct!=null) result[matchedItem].pct = pct;
+  }
+  return result;
+}
+
+/* === 全域 === */
+function renderHeaderDate(){
+  const d = new Date();
+  const tw = d.toLocaleDateString("zh-TW",{year:"numeric",month:"long",day:"numeric"});
+  document.getElementById("today-date").textContent = d.toISOString().slice(0,10);
+  document.getElementById("today-meta").textContent = tw + " · 訂目標日";
+}
+function updateGlobalUI(){
+  document.getElementById("set-date").value = state.global.setDate || todayStr();
+  document.getElementById("next-open-days").value = state.global.nextOpenDays || "";
+  document.getElementById("growth").value = state.global.growth ?? "10";
+  document.getElementById("prev-open-days").value = state.global.prevOpenDays || "";
+  updateAutoFields();
+}
+function updateAutoFields(){
+  const d = document.getElementById("set-date").value;
+  if(!d){
+    document.getElementById("mtd-days").value="";
+    document.getElementById("prev-month").value="";
+    return;
+  }
+  const day = parseInt(d.slice(-2),10);
+  document.getElementById("mtd-days").value = day - 1;
+  const setD = new Date(d);
+  const prev = prevYmKey(ym(setD), 1);
+  document.getElementById("prev-month").value = prev.replace("-","/");
+  const podInput = document.getElementById("prev-open-days");
+  if(!podInput.value){
+    const defaultPod = state.openDays[prev];
+    if(defaultPod) podInput.placeholder = `預設 ${defaultPod}`;
+  }
+}
+function readGlobal(){
+  state.global.setDate = document.getElementById("set-date").value;
+  state.global.nextOpenDays = document.getElementById("next-open-days").value;
+  state.global.growth = document.getElementById("growth").value;
+  state.global.prevOpenDays = document.getElementById("prev-open-days").value;
+  saveState();
+}
+function getTargetKey(){
+  const d = document.getElementById("set-date").value;
+  if(!d) return null;
+  return nextYm(new Date(d));
+}
+function getInputsForTarget(targetKey, item){
+  if(!state.inputs[targetKey]) state.inputs[targetKey] = {};
+  if(!state.inputs[targetKey][item]) state.inputs[targetKey][item] = {};
+  return state.inputs[targetKey][item];
+}
+
+/* === 計算 === */
+function calcItem(item){
+  const targetKey = getTargetKey();
+  if(!targetKey) return null;
+  const curKey = prevYmKey(targetKey, 1);
+  const mtdDays = parseFloat(document.getElementById("mtd-days").value);
+  const nextOpenDays = parseFloat(document.getElementById("next-open-days").value);
+  const growth = parseFloat(document.getElementById("growth").value) || 0;
+  const prevOpenDaysInput = parseFloat(document.getElementById("prev-open-days").value);
+  const prevOpenDays = !isNaN(prevOpenDaysInput) ? prevOpenDaysInput : state.openDays[curKey];
+
+  const ip = getInputsForTarget(targetKey, item);
+  const prevGp = parseFloat(ip.prevGp);
+  const prevAch = parseFloat(ip.prevAch);
+  const mtdGp = parseFloat(ip.mtdGp);
+  const weekGp = parseFloat(ip.weekGp);
+  const weekAch = parseFloat(ip.weekAch);
+  const mgrHui = parseFloat(ip.mgrHui);
+  const mgrHao = parseFloat(ip.mgrHao);
+
+  const gpMap = state.gp[item] || {};
+  const getDays = (k)=>{
+    if(k === curKey && !isNaN(prevOpenDays)) return prevOpenDays;
+    return state.openDays[k];
+  };
+  const getGp = (k)=>{
+    if(k === curKey && !isNaN(prevGp)) return prevGp;
+    return gpMap[k];
+  };
+
+  // 前12月
+  let sum12=0, days12=0, m12cnt=0;
+  for(let i=1;i<=12;i++){
+    const k = prevYmKey(targetKey, i);
+    const v = getGp(k), dys = getDays(k);
+    if(v!=null && dys!=null && !isNaN(v)){ sum12+=v; days12+=dys; m12cnt++; }
+  }
+  const daily12 = days12>0 ? sum12/days12 : null;
+
+  // 前6月
+  let sum6=0, days6=0, m6cnt=0;
+  for(let i=1;i<=6;i++){
+    const k = prevYmKey(targetKey, i);
+    const v = getGp(k), dys = getDays(k);
+    if(v!=null && dys!=null && !isNaN(v)){ sum6+=v; days6+=dys; m6cnt++; }
+  }
+  const daily6 = days6>0 ? sum6/days6 : null;
+
+  // 季節係數
+  let seasonRatios = [];
+  let seasonDetail = [];
+  for(let i=1;i<=3;i++){
+    const k = sameMonthYearAgo(targetKey, i);
+    const monthGp = gpMap[k];
+    const monthDays = state.openDays[k];
+    if(monthGp==null || monthDays==null) continue;
+    const monthDaily = monthGp / monthDays;
+    let ySum = 0, yDays = 0;
+    for(let j=1;j<=12;j++){
+      const k2 = prevYmKey(k, j);
+      const v2 = gpMap[k2], d2 = state.openDays[k2];
+      if(v2!=null && d2!=null){ ySum += v2; yDays += d2; }
+    }
+    if(yDays === 0) continue;
+    const yearDaily = ySum / yDays;
+    if(yearDaily === 0) continue;
+    const ratio = monthDaily / yearDaily;
+    seasonRatios.push(ratio);
+    seasonDetail.push({year:k.slice(0,4), ratio});
+  }
+  const seasonRatio = seasonRatios.length ? seasonRatios.reduce((a,b)=>a+b,0)/seasonRatios.length : null;
+  const daily3y = (daily12!=null && seasonRatio!=null) ? daily12 * seasonRatio : null;
+
+  const dailyCur = (mtdGp && mtdDays) ? mtdGp/mtdDays : null;
+
+  const parts = [
+    {pct:0.1, val:daily12},
+    {pct:0.2, val:daily6},
+    {pct:0.3, val:daily3y},
+    {pct:0.4, val:dailyCur}
+  ];
+  const validParts = parts.filter(p=>p.val!=null && !isNaN(p.val));
+  let weightedDaily = null;
+  if(validParts.length){
+    const wSum = validParts.reduce((a,p)=>a+p.pct,0);
+    weightedDaily = validParts.reduce((a,p)=>a + p.pct*p.val, 0) / wSum;
+  }
+
+  let rawAchRate = null;
+  if(prevAch!=null && !isNaN(prevAch)){
+    rawAchRate = prevAch / 100;
+  }else{
+    const lastActual = !isNaN(prevGp) ? prevGp : gpMap[curKey];
+    const lastTarget = state.targets[curKey]?.[item];
+    if(lastActual!=null && lastTarget!=null && lastTarget>0){
+      rawAchRate = lastActual / lastTarget;
+    }
+  }
+  let cappedAchRate = null;
+  let achCapped = false;
+  if(rawAchRate!=null){
+    cappedAchRate = clamp(rawAchRate, ACH_FLOOR, ACH_CEIL);
+    achCapped = (cappedAchRate !== rawAchRate);
+  }
+
+  let firstValue = null;
+  if(weightedDaily!=null && nextOpenDays){
+    const achMultiplier = cappedAchRate!=null ? cappedAchRate : 1;
+    firstValue = weightedDaily * achMultiplier * (1+growth/100) * nextOpenDays;
+  }
+
+  let weekProj = null, weekBaseAmt = null, weekAchFactor = null;
+  if(weekGp && nextOpenDays){
+    weekBaseAmt = (weekGp/7) * nextOpenDays;
+    if(weekAch!=null && !isNaN(weekAch)){
+      weekAchFactor = (weekAch/100/7) * nextOpenDays;
+      weekProj = weekBaseAmt * weekAchFactor;
+    }else{
+      weekProj = weekBaseAmt;
+    }
+  }
+
+  const fourNums = [firstValue, mgrHui, mgrHao, weekProj].filter(v=>v!=null && !isNaN(v));
+  const fourAvg = fourNums.length ? fourNums.reduce((a,b)=>a+b,0)/fourNums.length : null;
+
+  let dispersion = null;
+  if(fourNums.length >= 2 && fourAvg > 0){
+    const mx = Math.max(...fourNums), mn = Math.min(...fourNums);
+    dispersion = (mx - mn) / fourAvg;
+  }
+
+  return {
+    daily12, days12, m12cnt,
+    daily6, days6, m6cnt,
+    daily3y, seasonRatio, seasonDetail,
+    dailyCur, mtdDays,
+    weightedDaily,
+    rawAchRate, cappedAchRate, achCapped,
+    firstValue,
+    weekProj, weekBaseAmt, weekAchFactor, weekAch,
+    fourNums, fourAvg, dispersion
+  };
+}
+
+/* === Paste cards === */
+const PASTE_CONFIG = {
+  prevGp: {title:"上月完整 GP", icon:"◷", sub:"月底實際達成（GP + 達成率%）", placeholder:"大數 938,000 96.67%\niPhone 182,000 89.93%\n...", fields:["prevGp","prevAch"], updateHistory:true},
+  mtdGp: {title:"本月累計 GP", icon:"◐", sub:"本月 1 日~訂目標日（GP）", placeholder:"大數 650,000\niPhone 110,000\n...", fields:["mtdGp"], updateHistory:false},
+  weekGp: {title:"前 7 天 GP", icon:"◔", sub:"訂目標前 7 天（GP + 達成率%）", placeholder:"大數 212,756 22.44%\niPhone 37,548 20.30%\n...", fields:["weekGp","weekAch"], updateHistory:false},
+  mgrHui: {title:"經理 · 輝 目標", icon:"輝", sub:"輝訂的下月參考目標", placeholder:"大數 938,000\niPhone 182,000\n...", fields:["mgrHui"], updateHistory:false},
+  mgrHao: {title:"經理 · 豪 目標", icon:"豪", sub:"豪訂的下月參考目標", placeholder:"大數 928,000\niPhone 178,000\n...", fields:["mgrHao"], updateHistory:false}
+};
+
+function renderPasteCards(){
+  const grid = document.getElementById("paste-grid");
+  const targetKey = getTargetKey();
+  let html = "";
+  for(const [card, cfg] of Object.entries(PASTE_CONFIG)){
+    const cachedText = (targetKey && state.pasteText[targetKey]?.[card]) || "";
+    let cnt = 0;
+    if(targetKey){
+      ITEMS.forEach(it=>{
+        const v = state.inputs[targetKey]?.[it]?.[cfg.fields[0]];
+        if(v!=null && v!=="") cnt++;
+      });
+    }
+    const cls = cnt===ITEMS.length?"filled":(cnt>0?"partial":"");
+    const statusText = cnt===0?"未填":cnt===ITEMS.length?`✓ 已填 ${cnt}/${ITEMS.length}`:`部分 ${cnt}/${ITEMS.length}`;
+
+    html += `
+      <div class="paste-card ${cls}" data-card="${card}">
+        <div class="pc-head">
+          <div class="pc-title"><span class="dot"></span>${cfg.title}</div>
+          <span class="pc-status">${statusText}</span>
+        </div>
+        <div class="pc-sub">${cfg.sub}</div>
+        <textarea data-paste-text="${card}" placeholder="${cfg.placeholder.replace(/"/g,"&quot;")}">${cachedText}</textarea>
+        <div class="pc-foot">
+          <div class="pc-actions">
+            <button class="btn primary small" data-apply="${card}">套用</button>
+            <button class="btn ghost small" data-clear-paste="${card}">清空</button>
+          </div>
+          <div class="pc-preview" data-preview="${card}"></div>
+        </div>
+      </div>
+    `;
+  }
+  grid.innerHTML = html;
+
+  // 綁定
+  grid.querySelectorAll("textarea").forEach(ta=>{
+    ta.addEventListener("input", e=>{
+      const card = e.target.dataset.pasteText;
+      const targetKey = getTargetKey();
+      if(!targetKey) return;
+      if(!state.pasteText[targetKey]) state.pasteText[targetKey] = {};
+      state.pasteText[targetKey][card] = e.target.value;
+      saveState();
+      updatePreview(card);
+    });
+  });
+  grid.querySelectorAll("[data-apply]").forEach(b=>{
+    b.addEventListener("click", e=>applyPasteCard(b.dataset.apply));
+  });
+  grid.querySelectorAll("[data-clear-paste]").forEach(b=>{
+    b.addEventListener("click", e=>{
+      const card = b.dataset.clearPaste;
+      const cfg = PASTE_CONFIG[card];
+      const targetKey = getTargetKey();
+      if(!targetKey) return;
+      if(!confirm(`清空所有品項的「${cfg.title}」？`)) return;
+      ITEMS.forEach(item=>{
+        const ip = getInputsForTarget(targetKey, item);
+        cfg.fields.forEach(f=>ip[f] = null);
+      });
+      if(state.pasteText[targetKey]) state.pasteText[targetKey][card] = "";
+      saveState();
+      renderPasteCards();
+      renderMainTable();
+      updateProgress();
+    });
+  });
+
+  ITEMS.forEach(()=>{});
+  // 渲染所有預覽
+  Object.keys(PASTE_CONFIG).forEach(updatePreview);
+}
+
+function updatePreview(card){
+  const targetKey = getTargetKey();
+  if(!targetKey) return;
+  const text = state.pasteText[targetKey]?.[card] || "";
+  const parsed = parseTextToItems(text);
+  const cnt = Object.keys(parsed).length;
+  const el = document.querySelector(`[data-preview="${card}"]`);
+  if(!el) return;
+  if(!text.trim()){
+    el.textContent = "";
+    return;
+  }
+  if(cnt === 0){
+    el.innerHTML = '<span style="color:var(--bad)">無法識別</span>';
+  }else if(cnt < ITEMS.length){
+    el.innerHTML = `偵測到 <span style="color:var(--warn)">${cnt}</span>/${ITEMS.length} 品項`;
+  }else{
+    el.innerHTML = `<span style="color:var(--sage)">✓ ${cnt}</span>/${ITEMS.length} 品項就緒`;
+  }
+}
+
+function applyPasteCard(card){
+  const targetKey = getTargetKey();
+  if(!targetKey){alert("請先設定訂目標日期");return}
+  const cfg = PASTE_CONFIG[card];
+  const text = state.pasteText[targetKey]?.[card] || "";
+  const parsed = parseTextToItems(text);
+
+  let count = 0;
+  ITEMS.forEach(item=>{
+    const v = parsed[item];
+    if(v==null) return;
+    const ip = getInputsForTarget(targetKey, item);
+    if(v.gp!=null){ ip[cfg.fields[0]] = String(v.gp); count++; }
+    if(cfg.fields.length > 1 && v.pct!=null) ip[cfg.fields[1]] = String(v.pct);
+  });
+
+  if(cfg.updateHistory && card === "prevGp"){
+    const curKey = prevYmKey(targetKey, 1);
+    ITEMS.forEach(item=>{
+      const v = parsed[item];
+      if(v?.gp!=null){
+        if(!state.gp[item]) state.gp[item] = {};
+        state.gp[item][curKey] = v.gp;
+      }
+    });
+  }
+
+  saveState();
+  renderMainTable(true);
+  renderPasteCards();
+  updateProgress();
+  if(count === 0){
+    setStatus("⚠ 沒抓到任何品項，請檢查文字格式", "warn");
+  }else{
+    setStatus(`✓ 已填入 ${count}/${ITEMS.length} 個品項到「${cfg.title}」`);
+  }
+}
+
+function setStatus(msg, type="ok"){
+  const el = document.getElementById("status");
+  el.textContent = msg;
+  el.className = "status-line " + type;
+  setTimeout(()=>{el.textContent = "—"; el.className = "status-line"}, 4000);
+}
+
+function updateProgress(){
+  const targetKey = getTargetKey();
+  if(!targetKey) return;
+  let filled = 0;
+  const fields = ["prevGp","mtdGp","weekGp","mgrHui","mgrHao"];
+  ITEMS.forEach(it=>{
+    fields.forEach(f=>{
+      const v = state.inputs[targetKey]?.[it]?.[f];
+      if(v!=null && v!=="") filled++;
+    });
+  });
+  const total = ITEMS.length * fields.length;
+  const pct = (filled / total) * 100;
+  document.getElementById("progress-fill").style.width = pct + "%";
+  document.getElementById("progress-count").textContent = `${filled} / ${total}`;
+}
+
+/* === Main table === */
+function renderMainTable(highlightPasted=false){
+  const targetKey = getTargetKey();
+  const tbl = document.getElementById("main-table");
+  tbl.className = "main-table " + (state.viewMode === "compact" ? "compact" : "");
+
+  let html = `
+    <thead>
+      <tr>
+        <th rowspan="2">品項</th>
+        <th colspan="7" class="col-group-header">輸入</th>
+        <th colspan="4" class="col-group-header col-mid">每日 GP（自動）</th>
+        <th rowspan="2" class="col-mid" style="min-width:110px">第一數值<span class="sub">每日×達成×進步×開門</span></th>
+        <th rowspan="2" class="col-mid" style="min-width:110px">上週推算<span class="sub">含 7 天達成校正</span></th>
+        <th rowspan="2" style="min-width:165px">四項平均<span class="sub">± 離散度 · 含明細</span></th>
+        <th rowspan="2" style="min-width:140px">最終目標<span class="sub">可微調</span></th>
+      </tr>
+      <tr>
+        <th>上月GP</th>
+        <th>上月達成%</th>
+        <th>本月累計</th>
+        <th>前7天GP</th>
+        <th>7天達成%</th>
+        <th>輝目標</th>
+        <th>豪目標</th>
+        <th class="col-mid">10% 前12月</th>
+        <th class="col-mid">20% 前6月</th>
+        <th class="col-mid">30% 季節係數</th>
+        <th class="col-mid">40% 本月</th>
+      </tr>
+    </thead><tbody>
+  `;
+
+  ITEMS.forEach(item=>{
+    const ip = targetKey ? getInputsForTarget(targetKey, item) : {};
+    const r = targetKey ? calcItem(item) : null;
+    const adj = ip.finalAdjust;
+
+    let seasonTitle = "";
+    if(r?.seasonRatio!=null){
+      const det = r.seasonDetail.map(d=>`${d.year}: ${(d.ratio*100).toFixed(1)}%`).join(" · ");
+      seasonTitle = `季節係數平均 ${(r.seasonRatio*100).toFixed(1)}% (${det})`;
+    }
+
+    let achTitle = "";
+    if(r?.rawAchRate!=null){
+      achTitle = r.achCapped
+        ? `原始 ${(r.rawAchRate*100).toFixed(2)}% 被截斷為 ${(r.cappedAchRate*100).toFixed(2)}%`
+        : `達成率 ${(r.rawAchRate*100).toFixed(2)}%（未截斷）`;
+    }
+
+    let dispHTML = "";
+    if(r?.dispersion!=null){
+      const dPct = (r.dispersion * 100);
+      let cls = "disp-low";
+      if(dPct > 30) cls = "disp-high";
+      else if(dPct > 15) cls = "disp-mid";
+      dispHTML = `<span class="disp-pill ${cls}" title="四項中最高最低差距 ${dPct.toFixed(1)}%">±${dPct.toFixed(0)}%</span>`;
+    }
+
+    const flashCls = highlightPasted ? " just-pasted" : "";
+
+    html += `<tr>
+      <td>${item}</td>
+      <td class="input-cell"><input class="cell-input ${ip.prevGp?"filled"+flashCls:""}" type="number" data-item="${item}" data-field="prevGp" value="${ip.prevGp ?? ""}" placeholder="—"></td>
+      <td class="input-cell"><input class="cell-input ${ip.prevAch?"filled"+flashCls:""}" type="number" step="0.01" data-item="${item}" data-field="prevAch" value="${ip.prevAch ?? ""}" placeholder="—"></td>
+      <td class="input-cell"><input class="cell-input ${ip.mtdGp?"filled"+flashCls:""}" type="number" data-item="${item}" data-field="mtdGp" value="${ip.mtdGp ?? ""}" placeholder="—"></td>
+      <td class="input-cell"><input class="cell-input ${ip.weekGp?"filled"+flashCls:""}" type="number" data-item="${item}" data-field="weekGp" value="${ip.weekGp ?? ""}" placeholder="—"></td>
+      <td class="input-cell"><input class="cell-input ${ip.weekAch?"filled"+flashCls:""}" type="number" step="0.01" data-item="${item}" data-field="weekAch" value="${ip.weekAch ?? ""}" placeholder="—"></td>
+      <td class="input-cell"><input class="cell-input ${ip.mgrHui?"filled"+flashCls:""}" type="number" data-item="${item}" data-field="mgrHui" value="${ip.mgrHui ?? ""}" placeholder="—"></td>
+      <td class="input-cell"><input class="cell-input ${ip.mgrHao?"filled"+flashCls:""}" type="number" data-item="${item}" data-field="mgrHao" value="${ip.mgrHao ?? ""}" placeholder="—"></td>
+
+      <td class="daily col-mid">${r?fmt(r.daily12):"—"}</td>
+      <td class="daily col-mid">${r?fmt(r.daily6):"—"}</td>
+      <td class="daily col-mid" title="${seasonTitle}">${r?fmt(r.daily3y):"—"}</td>
+      <td class="daily col-mid">${r?fmt(r.dailyCur):"—"}</td>
+
+      <td class="first-val col-mid" title="${achTitle}">${r?fmt(r.firstValue):"—"}${r?.achCapped?'<br><span class="cap-tag">達成率截斷</span>':""}</td>
+      <td class="calc col-mid" title="${r?.weekAchFactor!=null?`基本 ${fmt(r.weekBaseAmt)} × 校正 ${(r.weekAchFactor*100).toFixed(2)}%`:""}">${r?fmt(r.weekProj):"—"}</td>
+      <td class="avg-val">${r?fmt(r.fourAvg):"—"}${dispHTML}${r?buildBreakdown(r, ip):""}</td>
+      <td class="final-cell"><input class="final-input" type="number" data-item="${item}" data-field="finalAdjust" value="${ip.finalTouched ? (ip.finalAdjust ?? "") : (r?Math.round(r.fourAvg||0):"")}" placeholder="—"></td>
+    </tr>`;
+  });
+
+  html += "</tbody>";
+  tbl.innerHTML = html;
+
+  tbl.querySelectorAll(".cell-input, .final-input").forEach(inp=>{
+    inp.addEventListener("input", e=>{
+      const item = e.target.dataset.item;
+      const field = e.target.dataset.field;
+      const v = e.target.value;
+      const targetKey = getTargetKey();
+      if(!targetKey) return;
+      const ip = getInputsForTarget(targetKey, item);
+      if(field === "finalAdjust"){
+        // 使用者動過最終欄（含清空）→ 標記，之後不再自動覆蓋
+        ip.finalTouched = true;
+        ip.finalAdjust = v;   // 保留空字串，不轉 null
+        saveState();
+        updateProgress();
+        return;  // 不重算（避免把平均塞回去）
+      }
+      ip[field] = v===""?null:v;
+      saveState();
+      updateRowCalcOnly(item);
+      updateProgress();
+    });
+    inp.addEventListener("keydown", e=>{
+      if(e.key==="Enter"){
+        e.preventDefault();
+        const all = Array.from(tbl.querySelectorAll(".cell-input, .final-input"));
+        const idx = all.indexOf(e.target);
+        if(idx>=0 && idx<all.length-1) all[idx+1].focus();
+      }
+    });
+    // 最終目標欄：雙擊重設回平均
+    if(inp.classList.contains("final-input")){
+      inp.title = "雙擊可重設回四項平均";
+      inp.addEventListener("dblclick", e=>{
+        const item = e.target.dataset.item;
+        const targetKey = getTargetKey();
+        if(!targetKey) return;
+        const ip = getInputsForTarget(targetKey, item);
+        ip.finalTouched = false;
+        ip.finalAdjust = null;
+        saveState();
+        const r = calcItem(item);
+        e.target.value = r ? Math.round(r.fourAvg||0) : "";
+      });
+    }
+  });
+}
+
+function updateRowCalcOnly(item){
+  const r = calcItem(item);
+  if(!r) return;
+  const rows = document.querySelectorAll("#main-table tbody tr");
+  let targetRow = null;
+  rows.forEach(tr=>{ if(tr.querySelector("td:first-child")?.textContent === item) targetRow = tr; });
+  if(!targetRow) return;
+  const cells = targetRow.querySelectorAll("td");
+  cells[8].textContent = fmt(r.daily12);
+  cells[9].textContent = fmt(r.daily6);
+  cells[10].textContent = fmt(r.daily3y);
+  if(r.seasonRatio!=null){
+    const det = r.seasonDetail.map(d=>`${d.year}: ${(d.ratio*100).toFixed(1)}%`).join(" · ");
+    cells[10].title = `季節係數平均 ${(r.seasonRatio*100).toFixed(1)}% (${det})`;
+  }
+  cells[11].textContent = fmt(r.dailyCur);
+
+  let firstHTML = fmt(r.firstValue);
+  if(r.achCapped) firstHTML += '<br><span class="cap-tag">達成率截斷</span>';
+  cells[12].innerHTML = firstHTML;
+  if(r.rawAchRate!=null){
+    cells[12].title = r.achCapped
+      ? `原始 ${(r.rawAchRate*100).toFixed(2)}% 被截斷為 ${(r.cappedAchRate*100).toFixed(2)}%`
+      : `達成率 ${(r.rawAchRate*100).toFixed(2)}%（未截斷）`;
+  }
+
+  cells[13].textContent = fmt(r.weekProj);
+  cells[13].title = r.weekAchFactor!=null ? `基本 ${fmt(r.weekBaseAmt)} × 校正 ${(r.weekAchFactor*100).toFixed(2)}%` : "";
+
+  let avgHTML = fmt(r.fourAvg);
+  if(r.dispersion!=null){
+    const dPct = (r.dispersion * 100);
+    let cls = "disp-low";
+    if(dPct > 30) cls = "disp-high";
+    else if(dPct > 15) cls = "disp-mid";
+    avgHTML += `<span class="disp-pill ${cls}" title="四項中最高最低差距 ${dPct.toFixed(1)}%">±${dPct.toFixed(0)}%</span>`;
+  }
+  avgHTML += buildBreakdown(r, getInputsForTarget(getTargetKey(), item));
+  cells[14].innerHTML = avgHTML;
+
+  cells.forEach((td, i)=>{
+    if(i>=1 && i<=7){
+      const inp = td.querySelector("input");
+      if(inp){
+        if(inp.value) inp.classList.add("filled");
+        else inp.classList.remove("filled");
+      }
+    }
+  });
+
+  const ip = getInputsForTarget(getTargetKey(), item);
+  if(!ip.finalTouched){
+    const finalInp = cells[15].querySelector("input");
+    if(finalInp) finalInp.value = Math.round(r.fourAvg||0);
+  }
+}
+
+/* === 匯出 / 鎖定 === */
+function exportTargets(){
+  const targetKey = getTargetKey();
+  if(!targetKey){alert("先設定訂目標日期");return}
+  const lines = [`【${targetKey.replace("-","/")} GP 目標】`,""];
+  ITEMS.forEach(item=>{
+    const ip = getInputsForTarget(targetKey, item);
+    const r = calcItem(item);
+    const adjNum = parseFloat(ip.finalAdjust);
+    const final = (ip.finalTouched && !isNaN(adjNum)) ? adjNum : (r?r.fourAvg:null);
+    lines.push(`${item}\t${fmt(final)}`);
+  });
+  const txt = lines.join("\n");
+  navigator.clipboard.writeText(txt).then(()=>setStatus("✓ 已複製到剪貼簿"))
+    .catch(()=>{
+      const ta=document.createElement("textarea");ta.value=txt;document.body.appendChild(ta);
+      ta.select();document.execCommand("copy");document.body.removeChild(ta);setStatus("✓ 已複製到剪貼簿");
+    });
+}
+
+function commitTargets(){
+  const targetKey = getTargetKey();
+  if(!targetKey){alert("先設定訂目標日期");return}
+  if(!confirm(`確定鎖定 ${targetKey.replace("-","/")} 的最終目標？\n之後算下個月達成率會用這個數字。`)) return;
+  if(!state.targets[targetKey]) state.targets[targetKey] = {};
+  ITEMS.forEach(item=>{
+    const ip = getInputsForTarget(targetKey, item);
+    const r = calcItem(item);
+    const adjNum = parseFloat(ip.finalAdjust);
+    const final = (ip.finalTouched && !isNaN(adjNum)) ? adjNum : (r?r.fourAvg:null);
+    if(final!=null && !isNaN(final)) state.targets[targetKey][item] = Math.round(final);
+  });
+  saveState();
+  // 自動建立快照
+  createSnapshot(`鎖定 ${targetKey.replace("-","/")} 目標`);
+  setStatus(`✓ 已鎖定 ${targetKey.replace("-","/")} 目標（已自動快照）`);
+  renderAchievementPage();
+}
+
+/* === 歷史 === */
+function renderHistoryGPTable(){
+  const months = Object.keys(state.openDays).sort();
+  const wrap = document.getElementById("history-gp-wrap");
+  let html = '<table class="history-table"><thead><tr><th>品項</th>';
+  months.forEach(m=>{ html += `<th>${m.replace("-","/")}</th>`; });
+  html += "</tr></thead><tbody>";
+  ITEMS.forEach(item=>{
+    html += `<tr><td>${item}</td>`;
+    months.forEach(m=>{
+      const v = state.gp[item]?.[m];
+      html += `<td><input data-item="${item}" data-month="${m}" type="number" value="${v??""}" placeholder="—"></td>`;
+    });
+    html += "</tr>";
+  });
+  html += `<tr class="row-divider"><td>開門日數</td>`;
+  months.forEach(m=>{ html += `<td class="od">${state.openDays[m] ?? "—"}</td>`; });
+  html += "</tr></tbody></table>";
+  wrap.innerHTML = html;
+  wrap.querySelectorAll("input").forEach(inp=>{
+    inp.addEventListener("change", e=>{
+      const item = e.target.dataset.item;
+      const month = e.target.dataset.month;
+      const val = parseFloat(e.target.value);
+      if(!state.gp[item]) state.gp[item] = {};
+      if(isNaN(val)) delete state.gp[item][month];
+      else state.gp[item][month] = val;
+      saveState();
+      ITEMS.forEach(updateRowCalcOnly);
+    });
+  });
+}
+
+function exportHistory(){
+  const months = Object.keys(state.openDays).sort();
+  let lines = ["品項\t" + months.map(m=>m.replace("-","/")).join("\t")];
+  ITEMS.forEach(item=>{
+    const row = [item];
+    months.forEach(m=>row.push(state.gp[item]?.[m] ?? ""));
+    lines.push(row.join("\t"));
+  });
+  lines.push("開門日數\t" + months.map(m=>state.openDays[m]??"").join("\t"));
+  const txt = lines.join("\n");
+  navigator.clipboard.writeText(txt).then(()=>setStatus("✓ 已複製整表"))
+    .catch(()=>{
+      const ta=document.createElement("textarea");ta.value=txt;document.body.appendChild(ta);
+      ta.select();document.execCommand("copy");document.body.removeChild(ta);setStatus("✓ 已複製整表");
+    });
+}
+
+/* === 開門天數 === */
+function renderOpenDaysTable(){
+  const allMonths = new Set(Object.keys(state.openDays));
+  const now = new Date();
+  for(let y = now.getFullYear()-3; y <= now.getFullYear()+1; y++){
+    for(let m=1;m<=12;m++){ allMonths.add(`${y}-${String(m).padStart(2,"0")}`); }
+  }
+  const months = Array.from(allMonths).sort();
+  const wrap = document.getElementById("opendays-wrap");
+  const years = {};
+  months.forEach(m=>{ const y = m.slice(0,4); if(!years[y]) years[y] = []; years[y].push(m); });
+
+  let html = '<table class="history-table"><thead><tr><th>年份</th>';
+  for(let i=1;i<=12;i++) html += `<th>${i}月</th>`;
+  html += "<th>整年</th></tr></thead><tbody>";
+  Object.entries(years).sort().forEach(([y, ms])=>{
+    html += `<tr><td>${y}</td>`;
+    let total = 0, hasAny = false;
+    for(let i=1;i<=12;i++){
+      const key = `${y}-${String(i).padStart(2,"0")}`;
+      const v = state.openDays[key];
+      if(v!=null){total += v; hasAny = true;}
+      html += `<td><input data-month="${key}" type="number" value="${v??""}" placeholder="—" min="1" max="31"></td>`;
+    }
+    html += `<td style="color:var(--accent);font-weight:600">${hasAny?total:""}</td></tr>`;
+  });
+  html += "</tbody></table>";
+  wrap.innerHTML = html;
+  wrap.querySelectorAll("input").forEach(inp=>{
+    inp.addEventListener("change", e=>{
+      const month = e.target.dataset.month;
+      const val = parseInt(e.target.value, 10);
+      if(isNaN(val)) delete state.openDays[month];
+      else state.openDays[month] = val;
+      saveState();
+      renderOpenDaysTable();
+      renderHistoryGPTable();
+      ITEMS.forEach(updateRowCalcOnly);
+    });
+  });
+}
+
+/* === 達成率 === */
+function renderAchievementPage(){
+  const summary = document.getElementById("ach-summary");
+  const targetKeys = Object.keys(state.targets).sort();
+  let totalTarget = 0, totalActual = 0, monthsWithData = 0;
+  let bestMonth = null, worstMonth = null, bestRate = -Infinity, worstRate = Infinity;
+  targetKeys.forEach(k=>{
+    const t = state.targets[k]?.["大數"];
+    const a = state.gp["大數"]?.[k];
+    if(t && a){
+      totalTarget += t; totalActual += a; monthsWithData++;
+      const rate = a/t;
+      if(rate > bestRate){bestRate = rate; bestMonth = k}
+      if(rate < worstRate){worstRate = rate; worstMonth = k}
+    }
+  });
+  const avgRate = totalTarget>0 ? totalActual/totalTarget : null;
+  let cardsHTML = "";
+  cardsHTML += `<div class="ach-card"><div class="lbl">已追蹤月份</div><div class="val">${monthsWithData}</div><div class="sub">月</div></div>`;
+  cardsHTML += `<div class="ach-card"><div class="lbl">累計達成率</div><div class="val" style="color:${avgRate>=1?"var(--sage)":avgRate>=0.85?"var(--warn)":"var(--bad)"}">${avgRate==null?"—":(avgRate*100).toFixed(1)+"%"}</div><div class="sub">${fmt(totalActual)} / ${fmt(totalTarget)}</div></div>`;
+  cardsHTML += `<div class="ach-card"><div class="lbl">最佳月份</div><div class="val" style="color:var(--sage)">${bestMonth?(bestRate*100).toFixed(1)+"%":"—"}</div><div class="sub">${bestMonth?bestMonth.replace("-","/"):"—"}</div></div>`;
+  cardsHTML += `<div class="ach-card"><div class="lbl">最差月份</div><div class="val" style="color:var(--bad)">${worstMonth?(worstRate*100).toFixed(1)+"%":"—"}</div><div class="sub">${worstMonth?worstMonth.replace("-","/"):"—"}</div></div>`;
+  summary.innerHTML = cardsHTML;
+
+  const wrap = document.getElementById("ach-table-wrap");
+  if(targetKeys.length === 0){
+    wrap.innerHTML = '<div class="empty-state">尚未鎖定任何月份目標<br><br>回到 ① 頁面，填完後按「鎖定本月目標」開始追蹤</div>';
+    return;
+  }
+  let html = '<table class="history-table"><thead><tr><th>月份 / 品項</th>';
+  ITEMS.forEach(it=>{ html += `<th>${it}</th>` });
+  html += "</tr></thead><tbody>";
+  targetKeys.forEach(k=>{
+    html += `<tr><td>${k.replace("-","/")}</td>`;
+    ITEMS.forEach(item=>{
+      const t = state.targets[k]?.[item];
+      const a = state.gp[item]?.[k];
+      if(t==null){ html += `<td style="color:var(--ink-3)">—</td>`; }
+      else if(a==null){ html += `<td style="color:var(--warn)">${fmt(t)}<br><span style="font-size:9px">待補實際</span></td>`; }
+      else{
+        const rate = a/t;
+        const cls = rate>=1?"ach-good":rate>=0.85?"ach-warn":"ach-bad";
+        html += `<td><span class="ach-pill ${cls}">${(rate*100).toFixed(1)}%</span><div style="font-size:9.5px;color:var(--ink-3);margin-top:3px">${fmt(a)}/${fmt(t)}</div></td>`;
+      }
+    });
+    html += "</tr>";
+  });
+  html += "</tbody></table>";
+  wrap.innerHTML = html;
+}
+
+/* === Tab === */
+function switchTab(name){
+  document.querySelectorAll(".main-tab").forEach(t=>{ t.classList.toggle("active", t.dataset.tab === name); });
+  document.querySelectorAll(".tab-panel").forEach(p=>{ p.classList.toggle("active", p.id === "tab-"+name); });
+  if(name === "history") renderHistoryGPTable();
+  if(name === "achievement") renderAchievementPage();
+  if(name === "opendays") renderOpenDaysTable();
+}
+
+function init(){
+  loadState();
+  updateGlobalUI();
+  renderPasteCards();
+  renderMainTable();
+  updateProgress();
+  renderHeaderDate();
+
+  document.getElementById("set-date").addEventListener("change", ()=>{
+    updateAutoFields();
+    readGlobal();
+    renderPasteCards();
+    renderMainTable();
+    updateProgress();
+  });
+  ["next-open-days","growth","prev-open-days"].forEach(id=>{
+    document.getElementById(id).addEventListener("input", ()=>{ readGlobal(); ITEMS.forEach(updateRowCalcOnly); });
+  });
+  document.querySelectorAll(".main-tab").forEach(t=>{ t.addEventListener("click", ()=>switchTab(t.dataset.tab)); });
+  document.querySelectorAll(".view-toggle button").forEach(b=>{
+    b.addEventListener("click", ()=>{
+      document.querySelectorAll(".view-toggle button").forEach(x=>x.classList.remove("active"));
+      b.classList.add("active");
+      state.viewMode = b.dataset.view;
+      saveState();
+      renderMainTable();
+    });
+  });
+  // restore view toggle state
+  document.querySelectorAll(".view-toggle button").forEach(b=>{
+    b.classList.toggle("active", b.dataset.view === state.viewMode);
+  });
+  document.getElementById("calc-all-btn").addEventListener("click", ()=>{ renderMainTable(); setStatus("✓ 已重算"); });
+  document.getElementById("export-btn").addEventListener("click", exportTargets);
+  document.getElementById("commit-btn").addEventListener("click", commitTargets);
+  document.getElementById("export-history").addEventListener("click", exportHistory);
+
+  // 備份 / 還原
+  document.getElementById("backup-export").addEventListener("click", backupExport);
+  document.getElementById("backup-import").addEventListener("click", ()=>{
+    document.getElementById("backup-file").click();
+  });
+  document.getElementById("backup-file").addEventListener("change", backupImport);
+
+  // 快照
+  document.getElementById("snapshot-open").addEventListener("click", openSnapModal);
+  document.getElementById("snap-close").addEventListener("click", closeSnapModal);
+  document.getElementById("snap-create-now").addEventListener("click", ()=>{
+    createSnapshot("手動快照");
+    renderSnapshotModal();
+    setStatus("✓ 已建立快照");
+  });
+  document.getElementById("snap-modal").addEventListener("click", e=>{
+    if(e.target.id === "snap-modal") closeSnapModal();
+  });
+}
+
+/* === 備份 / 還原全部資料 === */
+function backupExport(){
+  const payload = {
+    _app: "gp-target-composer",
+    _version: 8,
+    _exportedAt: new Date().toISOString(),
+    gp: state.gp,
+    openDays: state.openDays,
+    global: state.global,
+    inputs: state.inputs,
+    targets: state.targets,
+    viewMode: state.viewMode,
+    pasteText: state.pasteText
+  };
+  const blob = new Blob([JSON.stringify(payload, null, 2)], {type:"application/json"});
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  const stamp = new Date().toISOString().slice(0,16).replace(/[:T]/g,"-");
+  a.href = url;
+  a.download = `GP備份_${stamp}.json`;
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  URL.revokeObjectURL(url);
+  setStatus("✓ 已下載備份檔");
+}
+
+function backupImport(e){
+  const file = e.target.files?.[0];
+  if(!file) return;
+  const reader = new FileReader();
+  reader.onload = ev=>{
+    try{
+      const data = JSON.parse(ev.target.result);
+      if(data._app !== "gp-target-composer"){
+        if(!confirm("這個檔案似乎不是本系統的備份檔，仍要嘗試還原嗎？")){
+          e.target.value = "";
+          return;
+        }
+      }
+      if(!confirm("還原會「覆蓋」目前所有資料（歷史、目標、輸入、開門天數）。\n確定要還原嗎？\n\n建議先按「備份」存一份現況再還原。")){
+        e.target.value = "";
+        return;
+      }
+      // 套用
+      if(data.gp) state.gp = data.gp;
+      if(data.openDays) state.openDays = data.openDays;
+      if(data.global) state.global = data.global;
+      if(data.inputs) state.inputs = data.inputs;
+      if(data.targets) state.targets = data.targets;
+      if(data.viewMode) state.viewMode = data.viewMode;
+      if(data.pasteText) state.pasteText = data.pasteText;
+      saveState();
+      // 重繪全部
+      updateGlobalUI();
+      renderPasteCards();
+      renderMainTable();
+      updateProgress();
+      document.querySelectorAll(".view-toggle button").forEach(b=>{
+        b.classList.toggle("active", b.dataset.view === state.viewMode);
+      });
+      setStatus("✓ 已從備份檔還原全部資料");
+      const exportedAt = data._exportedAt ? `（備份時間 ${data._exportedAt.slice(0,16).replace("T"," ")}）` : "";
+      alert("還原完成！" + exportedAt);
+    }catch(err){
+      alert("還原失敗：檔案格式錯誤或損壞。\n\n" + err.message);
+    }
+    e.target.value = "";  // 清空，讓同檔可再次選
+  };
+  reader.readAsText(file);
+}
+
+/* === 自動快照系統 === */
+const SNAPSHOT_KEY = "gp_target_snapshots_v1";
+const SNAPSHOT_MAX = 12;
+
+function loadSnapshots(){
+  try{
+    const raw = localStorage.getItem(SNAPSHOT_KEY);
+    return raw ? JSON.parse(raw) : [];
+  }catch(e){return []}
+}
+function saveSnapshots(snaps){
+  try{localStorage.setItem(SNAPSHOT_KEY, JSON.stringify(snaps))}catch(e){
+    // 如果空間不足，砍最舊的再試
+    if(snaps.length > 1){
+      snaps.shift();
+      saveSnapshots(snaps);
+    }
+  }
+}
+
+function createSnapshot(label){
+  const snaps = loadSnapshots();
+  const snap = {
+    id: Date.now(),
+    label: label || "手動快照",
+    at: new Date().toISOString(),
+    targetKey: getTargetKey() || "",
+    data: {
+      gp: state.gp,
+      openDays: state.openDays,
+      global: state.global,
+      inputs: state.inputs,
+      targets: state.targets,
+      pasteText: state.pasteText
+    }
+  };
+  snaps.push(snap);
+  // 只留最近 SNAPSHOT_MAX 份
+  while(snaps.length > SNAPSHOT_MAX) snaps.shift();
+  saveSnapshots(snaps);
+}
+
+function fmtSnapTime(iso){
+  const d = new Date(iso);
+  const y = d.getFullYear();
+  const mo = String(d.getMonth()+1).padStart(2,"0");
+  const da = String(d.getDate()).padStart(2,"0");
+  const hh = String(d.getHours()).padStart(2,"0");
+  const mm = String(d.getMinutes()).padStart(2,"0");
+  return `${y}/${mo}/${da} ${hh}:${mm}`;
+}
+
+function timeAgo(iso){
+  const diff = (Date.now() - new Date(iso).getTime()) / 1000;
+  if(diff < 60) return "剛剛";
+  if(diff < 3600) return Math.floor(diff/60) + " 分鐘前";
+  if(diff < 86400) return Math.floor(diff/3600) + " 小時前";
+  if(diff < 86400*30) return Math.floor(diff/86400) + " 天前";
+  return Math.floor(diff/86400/30) + " 個月前";
+}
+
+function renderSnapshotModal(){
+  const snaps = loadSnapshots().slice().reverse();  // 新的在上
+  const list = document.getElementById("snap-list");
+  if(snaps.length === 0){
+    list.innerHTML = '<div class="snap-empty">尚無快照<br><br>每次按「鎖定本月目標」會自動建立快照，<br>或按上方「立即建立快照」手動存一份。</div>';
+    return;
+  }
+  let html = "";
+  snaps.forEach((s, idx)=>{
+    const targetDisp = s.targetKey ? s.targetKey.replace("-","/") : "—";
+    const targetCount = s.data?.targets ? Object.keys(s.data.targets).length : 0;
+    const inputCount = s.data?.inputs ? Object.keys(s.data.inputs).length : 0;
+    html += `
+      <div class="snap-item">
+        <div class="snap-icon">${targetDisp}</div>
+        <div class="snap-info">
+          <div class="snap-time">${fmtSnapTime(s.at)} <span style="color:var(--ink-3);font-weight:400">· ${timeAgo(s.at)}</span></div>
+          <div class="snap-detail">${s.label} · 已鎖定 ${targetCount} 月、輸入 ${inputCount} 月</div>
+        </div>
+        <div class="snap-actions">
+          <button class="btn primary small" data-snap-restore="${s.id}">還原</button>
+          <button class="btn small" data-snap-download="${s.id}">下載</button>
+          <button class="btn ghost small" data-snap-delete="${s.id}">刪除</button>
+        </div>
+      </div>
+    `;
+  });
+  list.innerHTML = html;
+  // 綁定
+  list.querySelectorAll("[data-snap-restore]").forEach(b=>{
+    b.addEventListener("click", ()=>restoreSnapshot(parseInt(b.dataset.snapRestore,10)));
+  });
+  list.querySelectorAll("[data-snap-download]").forEach(b=>{
+    b.addEventListener("click", ()=>downloadSnapshot(parseInt(b.dataset.snapDownload,10)));
+  });
+  list.querySelectorAll("[data-snap-delete]").forEach(b=>{
+    b.addEventListener("click", ()=>deleteSnapshot(parseInt(b.dataset.snapDelete,10)));
+  });
+}
+
+function restoreSnapshot(id){
+  const snaps = loadSnapshots();
+  const snap = snaps.find(s=>s.id === id);
+  if(!snap) return;
+  if(!confirm(`還原快照「${snap.label}」？\n建立時間：${fmtSnapTime(snap.at)}\n\n當前資料會被覆蓋。建議先按「立即建立快照」存一份現況。`)) return;
+  // 先自動為當前狀態建一份「還原前快照」，避免後悔
+  createSnapshot("還原前的自動保存");
+  const d = snap.data;
+  if(d.gp) state.gp = d.gp;
+  if(d.openDays) state.openDays = d.openDays;
+  if(d.global) state.global = d.global;
+  if(d.inputs) state.inputs = d.inputs;
+  if(d.targets) state.targets = d.targets;
+  if(d.pasteText) state.pasteText = d.pasteText;
+  saveState();
+  updateGlobalUI();
+  renderPasteCards();
+  renderMainTable();
+  updateProgress();
+  closeSnapModal();
+  setStatus(`✓ 已還原快照（${fmtSnapTime(snap.at)}）`);
+}
+
+function downloadSnapshot(id){
+  const snap = loadSnapshots().find(s=>s.id === id);
+  if(!snap) return;
+  const payload = {
+    _app: "gp-target-composer",
+    _version: 8,
+    _exportedAt: snap.at,
+    _snapshotLabel: snap.label,
+    ...snap.data
+  };
+  const blob = new Blob([JSON.stringify(payload, null, 2)], {type:"application/json"});
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  const stamp = fmtSnapTime(snap.at).replace(/[\/: ]/g,"-");
+  a.href = url;
+  a.download = `GP快照_${snap.targetKey||"unknown"}_${stamp}.json`;
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  URL.revokeObjectURL(url);
+}
+
+function deleteSnapshot(id){
+  if(!confirm("確定刪除這份快照？")) return;
+  const snaps = loadSnapshots().filter(s=>s.id !== id);
+  saveSnapshots(snaps);
+  renderSnapshotModal();
+}
+
+function openSnapModal(){
+  renderSnapshotModal();
+  document.getElementById("snap-modal").classList.add("show");
+}
+function closeSnapModal(){
+  document.getElementById("snap-modal").classList.remove("show");
+}
+
+init();
+</script>
+</body>
+</html>
